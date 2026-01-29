@@ -22,6 +22,7 @@ import {
   resolveLarkAccount,
   type ResolvedLarkAccount,
 } from "./accounts.js";
+import { larkMessageActions } from "./actions.js";
 import { LarkConfigSchema } from "./config-schema.js";
 import { larkOnboardingAdapter } from "./onboarding.js";
 import { probeLark } from "./probe.js";
@@ -73,7 +74,7 @@ export const larkDock: ChannelDock = {
     },
   },
   threading: {
-    resolveReplyToMode: () => "off",
+    resolveReplyToMode: () => "reply",
   },
 };
 
@@ -156,7 +157,7 @@ export const larkPlugin: ChannelPlugin<ResolvedLarkAccount> = {
     },
   },
   threading: {
-    resolveReplyToMode: () => "off",
+    resolveReplyToMode: () => "reply",
   },
   messaging: {
     normalizeTarget: normalizeLarkMessagingTarget,
@@ -170,6 +171,7 @@ export const larkPlugin: ChannelPlugin<ResolvedLarkAccount> = {
       hint: "<chatId> (oc_xxx for groups, ou_xxx for users)",
     },
   },
+  actions: larkMessageActions,
   directory: {
     self: async () => null,
     listPeers: async ({ cfg, accountId, query, limit }) => {

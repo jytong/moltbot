@@ -1,9 +1,15 @@
 import type { MoltbotConfig } from "clawdbot/plugin-sdk";
 
 import { resolveLarkAccount } from "./accounts.js";
-import { createLarkClient, sendImageMessage, sendTextMessage, uploadImage } from "./api.js";
+import {
+  createLarkClient,
+  sendCardMessage,
+  sendImageMessage,
+  sendTextMessage,
+  uploadImage,
+} from "./api.js";
 import { getLarkRuntime } from "./runtime.js";
-import type { LarkSendOptions, LarkSendResult } from "./types.js";
+import type { LarkCard, LarkSendOptions, LarkSendResult } from "./types.js";
 
 const LARK_TEXT_LIMIT = 4000;
 
@@ -84,6 +90,11 @@ export async function sendMessageLark(
   const client = createLarkClient(appId, appSecret);
   const receiveIdType = resolveReceiveIdType(chatId);
 
+  // Handle card message if provided
+  if (options.card) {
+    return sendCardMessage(client, chatId, receiveIdType, options.card, options.replyToId);
+  }
+
   // Handle media if provided
   if (options.mediaUrl) {
     return sendMediaMessageLark(client, chatId, receiveIdType, text, options.mediaUrl);
@@ -114,6 +125,17 @@ export async function sendMessageLark(
   }
 
   return lastResult;
+}
+
+/**
+ * Send a card message to Lark
+ */
+export async function sendCardMessageLark(
+  chatId: string,
+  card: LarkCard,
+  options: Omit<LarkSendOptions, "card"> = {},
+): Promise<LarkSendResult> {
+  return sendMessageLark(chatId, "", { ...options, card });
 }
 
 /**

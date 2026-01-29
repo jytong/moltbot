@@ -1,4 +1,16 @@
 /**
+ * Capability scope for features like cards
+ */
+export type LarkCapabilityScope = "off" | "dm" | "group" | "all" | "allowlist";
+
+/**
+ * Lark capabilities configuration
+ */
+export type LarkCapabilities = {
+  cards?: LarkCapabilityScope;
+};
+
+/**
  * Lark account configuration (single account)
  */
 export type LarkAccountConfig = {
@@ -13,6 +25,7 @@ export type LarkAccountConfig = {
   groups?: Record<string, LarkGroupConfig>;
   textChunkLimit?: number;
   mediaMaxMb?: number;
+  capabilities?: LarkCapabilities;
 };
 
 /**
@@ -107,6 +120,157 @@ export type LarkBotInfo = {
 };
 
 /**
+ * Lark card header template colors
+ */
+export type LarkCardTemplateColor =
+  | "blue"
+  | "wathet"
+  | "turquoise"
+  | "green"
+  | "yellow"
+  | "orange"
+  | "red"
+  | "carmine"
+  | "violet"
+  | "purple"
+  | "indigo"
+  | "grey";
+
+/**
+ * Lark card text element
+ */
+export type LarkCardText = {
+  tag: "plain_text" | "lark_md";
+  content: string;
+  lines?: number;
+};
+
+/**
+ * Lark card header
+ */
+export type LarkCardHeader = {
+  title: LarkCardText;
+  subtitle?: LarkCardText;
+  template?: LarkCardTemplateColor;
+};
+
+/**
+ * Lark card button
+ */
+export type LarkCardButton = {
+  tag: "button";
+  text: LarkCardText;
+  type?: "default" | "primary" | "danger";
+  value?: Record<string, unknown>;
+  url?: string;
+  multi_url?: {
+    url?: string;
+    pc_url?: string;
+    ios_url?: string;
+    android_url?: string;
+  };
+  confirm?: {
+    title: LarkCardText;
+    text: LarkCardText;
+  };
+};
+
+/**
+ * Lark card action element
+ */
+export type LarkCardAction = {
+  tag: "action";
+  actions: LarkCardButton[];
+  layout?: "bisected" | "trisection" | "flow";
+};
+
+/**
+ * Lark card div element
+ */
+export type LarkCardDiv = {
+  tag: "div";
+  text?: LarkCardText;
+  fields?: Array<{
+    is_short?: boolean;
+    text: LarkCardText;
+  }>;
+  extra?: LarkCardButton;
+};
+
+/**
+ * Lark card image element
+ */
+export type LarkCardImage = {
+  tag: "img";
+  img_key: string;
+  alt: LarkCardText;
+  title?: LarkCardText;
+  mode?: "crop_center" | "fit_horizontal";
+  preview?: boolean;
+};
+
+/**
+ * Lark card note element
+ */
+export type LarkCardNote = {
+  tag: "note";
+  elements: Array<LarkCardText | { tag: "img"; img_key: string; alt: LarkCardText }>;
+};
+
+/**
+ * Lark card hr element
+ */
+export type LarkCardHr = {
+  tag: "hr";
+};
+
+/**
+ * Lark card column
+ */
+export type LarkCardColumn = {
+  tag: "column";
+  width?: "weighted" | "auto";
+  weight?: number;
+  vertical_align?: "top" | "center" | "bottom";
+  elements: LarkCardElement[];
+};
+
+/**
+ * Lark card column set element
+ */
+export type LarkCardColumnSet = {
+  tag: "column_set";
+  flex_mode?: "none" | "stretch" | "flow" | "bisect" | "trisect";
+  background_style?: "default" | "grey";
+  horizontal_spacing?: "default" | "small";
+  columns: LarkCardColumn[];
+};
+
+/**
+ * Lark card element (union type)
+ */
+export type LarkCardElement =
+  | LarkCardDiv
+  | LarkCardAction
+  | LarkCardImage
+  | LarkCardNote
+  | LarkCardHr
+  | LarkCardColumnSet;
+
+/**
+ * Lark interactive card
+ */
+export type LarkCard = {
+  header?: LarkCardHeader;
+  elements: LarkCardElement[];
+  config?: {
+    wide_screen_mode?: boolean;
+    enable_forward?: boolean;
+    update_multi?: boolean;
+  };
+};
+
+/**
  * Lark send options
  */
 export type LarkSendOptions = {
@@ -117,6 +281,7 @@ export type LarkSendOptions = {
   mediaUrl?: string;
   caption?: string;
   replyToId?: string;
+  card?: LarkCard;
 };
 
 /**

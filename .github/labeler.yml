@@ -20,6 +20,11 @@
           - "src/imessage/**"
           - "extensions/imessage/**"
           - "docs/channels/imessage.md"
+"channel: lark":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "extensions/lark/**"
+          - "docs/channels/lark.md"
 "channel: line":
   - changed-files:
       - any-glob-to-any-file:

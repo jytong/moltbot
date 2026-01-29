@@ -12,6 +12,15 @@ const larkGroupSchema = z
   })
   .optional();
 
+// Capability scope for card messages
+const capabilityScopeSchema = z.enum(["off", "dm", "group", "all", "allowlist"]).optional();
+
+const larkCapabilitiesSchema = z
+  .object({
+    cards: capabilityScopeSchema,
+  })
+  .optional();
+
 const larkAccountSchema = z.object({
   name: z.string().optional(),
   enabled: z.boolean().optional(),
@@ -25,6 +34,7 @@ const larkAccountSchema = z.object({
   groups: z.object({}).catchall(larkGroupSchema).optional(),
   textChunkLimit: z.number().optional(),
   mediaMaxMb: z.number().optional(),
+  capabilities: larkCapabilitiesSchema,
 });
 
 export const LarkConfigSchema = larkAccountSchema.extend({
