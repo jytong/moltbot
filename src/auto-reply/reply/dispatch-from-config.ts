@@ -401,6 +401,7 @@ export async function dispatchReplyFromConfig(params: {
 
     const counts = dispatcher.getQueuedCounts();
     counts.final += routedFinalCount;
+
     recordProcessed("completed");
     markIdle("message_completed");
     return { queuedFinal, counts };

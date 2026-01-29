@@ -217,10 +217,13 @@ export async function handleInlineActions(params: {
     await opts.onBlockReply(reply);
   };
 
+  // Use rawBodyNormalized (original message without envelope) for inline command detection.
+  // This prevents the envelope prefix from being treated as "other content" alongside the command.
   const inlineCommand =
     allowTextCommands && command.isAuthorizedSender
-      ? extractInlineSimpleCommand(cleanedBody)
+      ? extractInlineSimpleCommand(command.rawBodyNormalized)
       : null;
+
   if (inlineCommand) {
     cleanedBody = inlineCommand.cleaned;
     sessionCtx.Body = cleanedBody;
@@ -296,6 +299,7 @@ export async function handleInlineActions(params: {
       isGroup,
       skillCommands,
     });
+
     if (inlineResult.reply) {
       if (!inlineCommand.cleaned) {
         typing.cleanup();
@@ -359,6 +363,7 @@ export async function handleInlineActions(params: {
     isGroup,
     skillCommands,
   });
+
   if (!commandResult.shouldContinue) {
     typing.cleanup();
     return { kind: "reply", reply: commandResult.reply };
