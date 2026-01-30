@@ -1,0 +1,168 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.1.27-beta.1",
+    "lastTouchedAt": "2026-01-28T08:20:44.303Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-01-28T06:45:48.423Z",
+    "lastRunVersion": "2026.1.27-beta.1",
+    "lastRunCommand": "onboard",
+    "lastRunMode": "local"
+  },
+  "models": {
+    "providers": {
+      "amazon-bedrock": {
+        "baseUrl": "https://bedrock-runtime.us-east-1.amazonaws.com",
+        "auth": "aws-sdk",
+        "api": "bedrock-converse-stream",
+        "models": [
+          {
+            "id": "arn:aws:bedrock:us-east-1:771899848059:application-inference-profile/k4nfuc4a12ot",
+            "name": "Claude Opus 4.5 (Bedrock)",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      },
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com/v1",
+        "auth": "api-key",
+        "api": "openai-completions",
+        "apiKey": "sk-3ef0a7e7fd57458092b988881cf4bf4b",
+        "models": [
+          {
+            "id": "deepseek-chat",
+            "name": "DeepSeek V3.2",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "contextWindow": 128000,
+            "maxTokens": 8192,
+            "cost": {
+              "input": 0.14,
+              "output": 0.28,
+              "cacheRead": 0.014,
+              "cacheWrite": 0
+            },
+            "compat": {
+              "supportsDeveloperRole": false
+            }
+          },
+          {
+            "id": "deepseek-reasoner",
+            "name": "DeepSeek R3.2",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "contextWindow": 128000,
+            "maxTokens": 65535,
+            "cost": {
+              "input": 0.55,
+              "output": 2.19,
+              "cacheRead": 0.14,
+              "cacheWrite": 0
+            },
+            "compat": {
+              "supportsDeveloperRole": false
+            }
+          }
+        ]
+      }
+    },
+    "bedrockDiscovery": {
+      "enabled": true,
+      "region": "us-east-1"
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "deepseek/deepseek-reasoner"
+      },
+      "models": {
+        "amazon-bedrock/arn:aws:bedrock:us-east-1:771899848059:application-inference-profile/k4nfuc4a12ot": {
+          "alias": "Opus 4.5 (Bedrock)"
+        },
+        "deepseek/deepseek-chat": {
+          "alias": "DeepSeek V3"
+        },
+        "deepseek/deepseek-reasoner": {
+          "alias": "DeepSeek R1"
+        }
+      },
+      "workspace": "/root/clawd",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "channels": {
+    "lark": {
+      "appId": "cli_a9f327ea37b9dcb2",
+      "appSecret": "cfS9i8qY7lt6YXBOnL3gnhTeQSa1coWY",
+      "dmPolicy": "open",
+      "allowFrom": [
+        "ou_0dbe539b33b3d8cfdd55ef5c8a67341a"
+      ]
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "db87c21ed4ab5d81763e537496f5d872287eedb4721c709d"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    },
+    "entries": {
+      "nano-banana-pro": {
+        "apiKey": "AIzaSyDWN-ul7bktbWazyQRqfBnc1CLZX2U37e4"
+      }
+    }
+  },
+  "plugins": {
+    "load": {
+      "paths": [
+        "/app/extensions/lark"
+      ]
+    },
+    "entries": {
+      "lark": {
+        "enabled": true
+      }
+    }
+  }
+}
