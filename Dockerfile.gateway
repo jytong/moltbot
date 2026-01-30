@@ -49,6 +49,9 @@ COPY deployment/v2ray/entrypoint.sh /storage
 RUN mkdir -p /root/.moltbot
 COPY deployment/moltbot.json /root/.moltbot/moltbot.json
 
+# bashrc alias
+RUN echo "alias ls='ls -lph --color=auto'" >> /root/.bashrc
+
 # Copy and setup entrypoint script
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
