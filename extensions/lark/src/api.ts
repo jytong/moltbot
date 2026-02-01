@@ -1,3 +1,5 @@
+import { Readable } from "node:stream";
+
 import * as lark from "@larksuiteoapi/node-sdk";
 
 import type { LarkBotInfo, LarkCard, LarkSendResult } from "./types.js";
@@ -238,7 +240,8 @@ export async function uploadImage(
         client.im.image.create({
           data: {
             image_type: "message",
-            image: imageBuffer,
+            // Create fresh stream on each retry (streams can only be consumed once)
+            image: Readable.from(imageBuffer),
           },
         }),
       "uploadImage",
@@ -278,7 +281,8 @@ export async function uploadFile(
           data: {
             file_type: fileType,
             file_name: fileName,
-            file: fileBuffer,
+            // Create fresh stream on each retry (streams can only be consumed once)
+            file: Readable.from(fileBuffer),
           },
         }),
       "uploadFile",

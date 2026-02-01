@@ -1,12 +1,12 @@
-import type { RuntimeEnv } from "clawdbot/plugin-sdk";
+import type { PluginRuntime } from "clawdbot/plugin-sdk";
 
-let runtimeEnv: RuntimeEnv;
+let runtimeEnv: PluginRuntime;
 
-export function setLarkRuntime(runtime: RuntimeEnv): void {
+export function setLarkRuntime(runtime: PluginRuntime): void {
   runtimeEnv = runtime;
 }
 
-export function getLarkRuntime(): RuntimeEnv {
+export function getLarkRuntime(): PluginRuntime {
   if (!runtimeEnv) {
     throw new Error("Lark runtime not initialized");
   }

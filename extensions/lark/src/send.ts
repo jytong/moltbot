@@ -151,8 +151,8 @@ async function sendMediaMessageLark(
   try {
     const core = getLarkRuntime();
 
-    // Fetch the media
-    const fetched = await core.channel.media.fetchRemoteMedia({ url: mediaUrl });
+    // Fetch the media (use loadWebMedia to support local file paths)
+    const fetched = await core.media.loadWebMedia(mediaUrl);
 
     // Upload to Lark
     const uploadResult = await uploadImage(client, fetched.buffer);

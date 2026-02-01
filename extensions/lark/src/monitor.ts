@@ -452,6 +452,17 @@ function getLarkFileType(url: string): LarkFileType {
 }
 
 function getFileNameFromUrl(url: string): string {
+  // Handle local file paths (absolute or relative)
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    // Extract filename from local path
+    const pathParts = url.split("/");
+    const fileName = pathParts[pathParts.length - 1];
+    if (fileName && fileName.includes(".")) {
+      return fileName;
+    }
+  }
+
+  // Handle URLs
   try {
     const urlObj = new URL(url);
     const pathParts = urlObj.pathname.split("/");
@@ -462,6 +473,7 @@ function getFileNameFromUrl(url: string): string {
   } catch {
     // Invalid URL
   }
+
   // Default filename based on current timestamp
   return `file_${Date.now()}`;
 }
@@ -494,7 +506,8 @@ async function deliverLarkReply(params: {
   for (const url of mediaUrls) {
     try {
       const mediaType = detectMediaType(url);
-      const fetched = await core.channel.media.fetchRemoteMedia({ url });
+      // Use loadWebMedia instead of fetchRemoteMedia to support local file paths
+      const fetched = await core.media.loadWebMedia(url);
 
       switch (mediaType) {
         case "image": {

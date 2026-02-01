@@ -19,7 +19,7 @@
           {
             "id": "arn:aws:bedrock:us-east-1:771899848059:application-inference-profile/k4nfuc4a12ot",
             "name": "Claude Opus 4.5 (Bedrock)",
-            "reasoning": false,
+            "reasoning": true,
             "input": [
               "text",
               "image"
