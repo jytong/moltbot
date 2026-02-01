@@ -3,9 +3,12 @@ import type { MoltbotConfig } from "clawdbot/plugin-sdk";
 import { resolveLarkAccount } from "./accounts.js";
 import {
   createLarkClient,
+  sendAudioMessage,
   sendCardMessage,
+  sendFileMessage,
   sendImageMessage,
   sendTextMessage,
+  uploadFile,
   uploadImage,
 } from "./api.js";
 import { getLarkRuntime } from "./runtime.js";
@@ -138,8 +141,80 @@ export async function sendCardMessageLark(
   return sendMessageLark(chatId, "", { ...options, card });
 }
 
+// Media type detection
+type MediaType = "image" | "audio" | "video" | "document" | "unknown";
+type LarkFileType = "opus" | "mp4" | "pdf" | "doc" | "xls" | "ppt" | "stream";
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"];
+const AUDIO_EXTENSIONS = [".mp3", ".wav", ".ogg", ".opus", ".m4a", ".aac"];
+const VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".mkv", ".webm"];
+const DOCUMENT_EXTENSIONS = [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"];
+
+function detectMediaType(url: string): MediaType {
+  const lower = url.toLowerCase();
+
+  if (IMAGE_EXTENSIONS.some((ext) => lower.includes(ext)) || lower.includes("image/")) {
+    return "image";
+  }
+  if (AUDIO_EXTENSIONS.some((ext) => lower.includes(ext)) || lower.includes("audio/")) {
+    return "audio";
+  }
+  if (VIDEO_EXTENSIONS.some((ext) => lower.includes(ext)) || lower.includes("video/")) {
+    return "video";
+  }
+  if (DOCUMENT_EXTENSIONS.some((ext) => lower.includes(ext))) {
+    return "document";
+  }
+  return "unknown";
+}
+
+function getLarkFileType(url: string): LarkFileType {
+  const lower = url.toLowerCase();
+
+  // Audio
+  if (lower.includes(".opus") || lower.includes("audio/opus")) return "opus";
+
+  // Video
+  if (lower.includes(".mp4") || lower.includes("video/mp4")) return "mp4";
+
+  // Documents
+  if (lower.includes(".pdf") || lower.includes("application/pdf")) return "pdf";
+  if (lower.includes(".doc") || lower.includes("application/msword") || lower.includes(".docx")) return "doc";
+  if (lower.includes(".xls") || lower.includes("application/vnd.ms-excel") || lower.includes(".xlsx")) return "xls";
+  if (lower.includes(".ppt") || lower.includes("application/vnd.ms-powerpoint") || lower.includes(".pptx")) return "ppt";
+
+  // Default to stream for unknown types
+  return "stream";
+}
+
+function getFileNameFromUrl(url: string): string {
+  // Handle local file paths (absolute or relative)
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    const pathParts = url.split("/");
+    const fileName = pathParts[pathParts.length - 1];
+    if (fileName && fileName.includes(".")) {
+      return fileName;
+    }
+  }
+
+  // Handle URLs
+  try {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split("/");
+    const fileName = pathParts[pathParts.length - 1];
+    if (fileName && fileName.includes(".")) {
+      return fileName;
+    }
+  } catch {
+    // Invalid URL
+  }
+
+  // Default filename based on current timestamp
+  return `file_${Date.now()}`;
+}
+
 /**
- * Send a media message
+ * Send a media message (supports image, audio, video, document, and generic files)
  */
 async function sendMediaMessageLark(
   client: ReturnType<typeof createLarkClient>,
@@ -153,20 +228,58 @@ async function sendMediaMessageLark(
 
     // Fetch the media (use loadWebMedia to support local file paths)
     const fetched = await core.media.loadWebMedia(mediaUrl);
+    const mediaType = detectMediaType(mediaUrl);
 
-    // Upload to Lark
-    const uploadResult = await uploadImage(client, fetched.buffer);
-    if (!uploadResult.ok || !uploadResult.imageKey) {
-      return { ok: false, error: uploadResult.error || "Failed to upload image" };
+    let sendResult: LarkSendResult;
+
+    switch (mediaType) {
+      case "image": {
+        // Upload and send image
+        const uploadResult = await uploadImage(client, fetched.buffer);
+        if (!uploadResult.ok || !uploadResult.imageKey) {
+          return { ok: false, error: uploadResult.error || "Failed to upload image" };
+        }
+        sendResult = await sendImageMessage(client, chatId, receiveIdType, uploadResult.imageKey);
+        break;
+      }
+
+      case "audio": {
+        // Upload and send audio
+        const fileName = getFileNameFromUrl(mediaUrl);
+        const fileType = getLarkFileType(mediaUrl);
+        const uploadResult = await uploadFile(client, fetched.buffer, fileName, fileType);
+        if (!uploadResult.ok || !uploadResult.fileKey) {
+          return { ok: false, error: uploadResult.error || "Failed to upload audio" };
+        }
+        sendResult = await sendAudioMessage(client, chatId, receiveIdType, uploadResult.fileKey);
+        break;
+      }
+
+      case "video":
+      case "document": {
+        // Upload and send as file
+        const fileName = getFileNameFromUrl(mediaUrl);
+        const fileType = getLarkFileType(mediaUrl);
+        const uploadResult = await uploadFile(client, fetched.buffer, fileName, fileType);
+        if (!uploadResult.ok || !uploadResult.fileKey) {
+          return { ok: false, error: uploadResult.error || `Failed to upload ${mediaType}` };
+        }
+        sendResult = await sendFileMessage(client, chatId, receiveIdType, uploadResult.fileKey);
+        break;
+      }
+
+      case "unknown":
+      default: {
+        // Try to send as a generic file with "stream" type
+        const fileName = getFileNameFromUrl(mediaUrl);
+        const uploadResult = await uploadFile(client, fetched.buffer, fileName, "stream");
+        if (!uploadResult.ok || !uploadResult.fileKey) {
+          return { ok: false, error: uploadResult.error || "Failed to upload file" };
+        }
+        sendResult = await sendFileMessage(client, chatId, receiveIdType, uploadResult.fileKey);
+        break;
+      }
     }
-
-    // Send the image
-    const sendResult = await sendImageMessage(
-      client,
-      chatId,
-      receiveIdType,
-      uploadResult.imageKey,
-    );
 
     if (!sendResult.ok) {
       return sendResult;
@@ -174,12 +287,7 @@ async function sendMediaMessageLark(
 
     // Send caption as separate text message if provided
     if (caption?.trim()) {
-      const captionResult = await sendTextMessage(
-        client,
-        chatId,
-        receiveIdType,
-        caption.trim(),
-      );
+      const captionResult = await sendTextMessage(client, chatId, receiveIdType, caption.trim());
       return captionResult;
     }
 
