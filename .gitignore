@@ -76,6 +76,6 @@ USER.md
 # local tooling
 .serena/
 
-# Local deployment and save directories
-deployment/
+# Local save directories (environment-specific data)
+deployment/save/
 save/
