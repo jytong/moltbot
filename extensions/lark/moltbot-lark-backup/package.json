@@ -1,0 +1,34 @@
+{
+  "name": "@moltbot/lark",
+  "version": "2026.1.27-beta.1",
+  "type": "module",
+  "description": "Moltbot Lark/Feishu channel plugin",
+  "moltbot": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "channel": {
+      "id": "lark",
+      "label": "Lark",
+      "selectionLabel": "Lark/Feishu (Bot)",
+      "docsPath": "/channels/lark",
+      "docsLabel": "lark",
+      "blurb": "Lark/Feishu messaging platform with Bot API.",
+      "aliases": [
+        "feishu",
+        "fs"
+      ],
+      "order": 75,
+      "quickstartAllowFrom": true
+    },
+    "install": {
+      "npmSpec": "@moltbot/lark",
+      "localPath": "extensions/lark",
+      "defaultChoice": "npm"
+    }
+  },
+  "dependencies": {
+    "moltbot": "workspace:*",
+    "@larksuiteoapi/node-sdk": "^1.40.0"
+  }
+}
