@@ -78,6 +78,16 @@ upload_with_coscli() {
         --region "$COS_REGION"
 }
 
+# Function to delete file using coscli
+delete_with_coscli() {
+    local remote_path="$1"
+
+    coscli rm "cos://$COS_BUCKET/$remote_path" \
+        --secret-id "$COS_SECRET_ID" \
+        --secret-key "$COS_SECRET_KEY" \
+        --region "$COS_REGION"
+}
+
 # Function to generate COS signature for curl upload
 generate_cos_signature() {
     local http_method="$1"
@@ -116,8 +126,23 @@ upload_with_curl() {
         --data-binary "@$local_path"
 }
 
-# Upload changed files
+# Function to delete file using curl
+delete_with_curl() {
+    local remote_path="$1"
+
+    local timestamp=$(date +%s)
+    local uri_path="/$remote_path"
+    local url="https://$COS_BUCKET.cos.$COS_REGION.myqcloud.com$uri_path"
+
+    local authorization=$(generate_cos_signature "delete" "$uri_path" "$timestamp")
+
+    curl -s -X DELETE "$url" \
+        -H "Authorization: $authorization"
+}
+
+# Sync changed files (upload or delete)
 UPLOAD_COUNT=0
+DELETE_COUNT=0
 FAILED_COUNT=0
 
 echo "$CHANGED_FILES" | while read -r file; do
@@ -127,17 +152,35 @@ echo "$CHANGED_FILES" | while read -r file; do
 
     local_path="$PROJECT_ROOT/$file"
 
-    # Skip if file was deleted
-    if [ ! -f "$local_path" ]; then
-        log_warn "Skipping deleted file: $file"
-        continue
-    fi
-
     # Build remote path with prefix
     if [ -n "$COS_PREFIX" ]; then
         remote_path="$COS_PREFIX/$file"
     else
         remote_path="$file"
+    fi
+
+    # Check if file was deleted
+    if [ ! -f "$local_path" ]; then
+        log_info "Deleting from COS: $remote_path"
+
+        if [ "$USE_CURL" = true ]; then
+            if delete_with_curl "$remote_path"; then
+                log_info "Deleted: $remote_path"
+                ((DELETE_COUNT++)) || true
+            else
+                log_error "Failed to delete: $remote_path"
+                ((FAILED_COUNT++)) || true
+            fi
+        else
+            if delete_with_coscli "$remote_path"; then
+                log_info "Deleted: $remote_path"
+                ((DELETE_COUNT++)) || true
+            else
+                log_error "Failed to delete: $remote_path"
+                ((FAILED_COUNT++)) || true
+            fi
+        fi
+        continue
     fi
 
     log_info "Uploading: $file -> $remote_path"
@@ -161,4 +204,4 @@ echo "$CHANGED_FILES" | while read -r file; do
     fi
 done
 
-log_info "Upload complete."
+log_info "Sync complete."
