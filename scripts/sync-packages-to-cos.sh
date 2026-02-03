@@ -1,7 +1,10 @@
 #!/bin/bash
 #
-# Sync changed files in packages/ directory to Tencent Cloud COS
+# Sync changed files in specified directory to Tencent Cloud COS
 # This script is called by post-commit hook
+#
+# Configuration in .cos.env:
+#   COS_SYNC_DIR - Directory to sync (default: packages)
 #
 
 set -e
@@ -44,17 +47,20 @@ if [ -z "$COS_SECRET_ID" ] || [ -z "$COS_SECRET_KEY" ] || [ -z "$COS_REGION" ] |
     exit 1
 fi
 
-# Get changed files in packages/ from the last commit
+# Set sync directory (default: packages)
+SYNC_DIR="${COS_SYNC_DIR:-packages}"
+
+# Get changed files in sync directory from the last commit
 cd "$PROJECT_ROOT"
 
-CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD -- packages/ 2>/dev/null || true)
+CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD -- "$SYNC_DIR/" 2>/dev/null || true)
 
 if [ -z "$CHANGED_FILES" ]; then
-    log_info "No changes in packages/ directory"
+    log_info "No changes in $SYNC_DIR/ directory"
     exit 0
 fi
 
-log_info "Changed files in packages/:"
+log_info "Changed files in $SYNC_DIR/:"
 echo "$CHANGED_FILES" | while read -r file; do
     echo "  - $file"
 done
